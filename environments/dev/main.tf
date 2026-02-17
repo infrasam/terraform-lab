@@ -4,7 +4,8 @@ resource "kubernetes_namespace" "vault" {
 
     labels = {
       managed_by  = "terraform"
-      environment = "dev"
+      environment = var.environment
+      purpose     = "secrets-management"
     }
   }
 }
