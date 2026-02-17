@@ -1,4 +1,4 @@
-output "vault_namespace" {
-  description = "Name of the vault namespace"
-  value       = kubernetes_namespace.vault.metadata[0].name
+output "namespace_names" {
+  description = "Names of created namespaces"
+  value       = [for ns in kubernetes_namespace.this : ns.metadata[0].name]
 }

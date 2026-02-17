@@ -1,11 +1,12 @@
-resource "kubernetes_namespace" "vault" {
+resource "kubernetes_namespace" "this" {
+  for_each = toset(var.namespaces)
+
   metadata {
-    name = "vault"
+    name = each.key
 
     labels = {
       managed_by  = "terraform"
       environment = var.environment
-      purpose     = "secrets-management"
     }
   }
 }
