@@ -16,6 +16,7 @@ resource "vault_kubernetes_auth_backend_config" "config" {
   kubernetes_host = "https://kubernetes.default.svc"
 }
 
+# Policy: myapp read-only (pod-level access)
 resource "vault_policy" "myapp_read" {
   name   = "myapp-read"
   policy = <<-EOT
@@ -25,11 +26,35 @@ resource "vault_policy" "myapp_read" {
   EOT
 }
 
+# Policy: ESO read access (broader, for syncing secrets)
+resource "vault_policy" "eso_read" {
+  name   = "eso-read"
+  policy = <<-EOT
+    path "secret/data/*" {
+      capabilities = ["read"]
+    }
+    path "secret/metadata/*" {
+      capabilities = ["read", "list"]
+    }
+  EOT
+}
+
+# Role: myapp pod access
 resource "vault_kubernetes_auth_backend_role" "myapp" {
   backend                          = vault_auth_backend.kubernetes.path
   role_name                        = "myapp"
   bound_service_account_names      = ["myapp"]
   bound_service_account_namespaces = ["default"]
   token_policies                   = [vault_policy.myapp_read.name]
+  token_ttl                        = 3600
+}
+
+# Role: ESO access
+resource "vault_kubernetes_auth_backend_role" "external_secrets" {
+  backend                          = vault_auth_backend.kubernetes.path
+  role_name                        = "external-secrets"
+  bound_service_account_names      = ["external-secrets"]
+  bound_service_account_namespaces = ["external-secrets"]
+  token_policies                   = [vault_policy.eso_read.name]
   token_ttl                        = 3600
 }
