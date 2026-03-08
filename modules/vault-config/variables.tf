@@ -26,3 +26,8 @@ variable "kubernetes_roles" {
     token_ttl                  = optional(number, 3600)
   }))
 }
+
+variable "secret_paths" {
+  description = "Map of secret paths to create with initial placeholder keys"
+  type = map(list(string))
+}

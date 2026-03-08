@@ -44,3 +44,17 @@ resource "vault_kubernetes_auth_backend_role" "this" {
   token_policies                   = each.value.policies
   token_ttl                        = each.value.token_ttl
 }
+
+resource "vault_kv_secret_v2" "this" {
+  for_each = var.secret_paths
+  mount    = vault_mount.secret.path
+  name     = each.key
+
+  data_json = jsonencode({
+    for key in each.value : key => "REPLACE_IN_VAULT_UI"
+  })
+
+  lifecycle {
+    ignore_changes = [data_json]
+  }
+}
