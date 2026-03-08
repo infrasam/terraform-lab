@@ -21,8 +21,10 @@ module "vault_config" {
     }
   }
 
-  secret_paths = {
-    "external-dns/cloudflare"            = ["cloudflare-api-token"]
-    "kube-prometheus-stack/grafana-admin" = ["admin-user", "admin-password"]
-  }
+  # Application secret namespaces
+  # Terraform creates the top-level path, secrets are managed in Vault UI
+  secret_namespaces = [
+    "external-dns",
+    "kube-prometheus-stack",
+  ]
 }

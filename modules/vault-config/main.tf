@@ -17,9 +17,6 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 }
 
 # Dynamic policies
-# for_each loops over the policies map from variables
-# If you pass 2 policies, Terraform creates 2 vault_policy resources
-# If you pass 10, it creates 10 - without changing this code
 resource "vault_policy" "this" {
   for_each = var.policies
   name     = each.key
@@ -33,8 +30,6 @@ resource "vault_policy" "this" {
 }
 
 # Dynamic roles
-# Same pattern - one role per entry in the kubernetes_roles map
-# each.key = role name, each.value = role configuration
 resource "vault_kubernetes_auth_backend_role" "this" {
   for_each                         = var.kubernetes_roles
   backend                          = vault_auth_backend.kubernetes.path
@@ -45,13 +40,17 @@ resource "vault_kubernetes_auth_backend_role" "this" {
   token_ttl                        = each.value.token_ttl
 }
 
-resource "vault_kv_secret_v2" "this" {
-  for_each = var.secret_paths
+# Application secret namespaces
+# Creates a top-level path per app with an .initialized marker
+# All actual secrets under each path are managed in Vault UI
+resource "vault_kv_secret_v2" "namespace" {
+  for_each = toset(var.secret_namespaces)
   mount    = vault_mount.secret.path
-  name     = each.key
+  name     = "${each.value}/.initialized"
 
   data_json = jsonencode({
-    for key in each.value : key => "REPLACE_IN_VAULT_UI"
+    managed_by = "terraform"
+    purpose    = "Marker to ensure this secret namespace exists. Create secrets under this path in Vault UI."
   })
 
   lifecycle {

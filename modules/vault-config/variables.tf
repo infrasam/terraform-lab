@@ -27,7 +27,7 @@ variable "kubernetes_roles" {
   }))
 }
 
-variable "secret_paths" {
-  description = "Map of secret paths to create with initial placeholder keys"
-  type = map(list(string))
+variable "secret_namespaces" {
+  description = "List of application secret namespaces to create in Vault. Each entry creates a top-level path with a .initialized marker."
+  type        = list(string)
 }
