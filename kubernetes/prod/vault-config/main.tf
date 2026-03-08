@@ -1,5 +1,5 @@
 module "vault_config" {
-  source = "../../../modules/vault-config"
+  source = "../../modules/vault-config"
 
   kubernetes_host = "https://kubernetes.default.svc"
   kv_path         = "secret"
