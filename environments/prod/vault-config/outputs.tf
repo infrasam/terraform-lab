@@ -1,9 +1,11 @@
 output "auth_backend_path" {
-  description = "Path of the Kubernetes auth backend"
-  value       = vault_auth_backend.kubernetes.path
+  value = module.vault_config.auth_backend_path
 }
 
-output "myapp_role" {
-  description = "Name of the myapp Vault role"
-  value       = vault_kubernetes_auth_backend_role.myapp.role_name
+output "policy_names" {
+  value = module.vault_config.policy_names
+}
+
+output "role_names" {
+  value = module.vault_config.role_names
 }

@@ -1,60 +1,35 @@
-resource "vault_mount" "secret" {
-  path    = "secret"
-  type    = "kv"
-  options = {
-    version = "2"
-  }
-  description = "KV v2 secrets engine for application secrets"
-}
+# Call the vault-config module with prod-specific values
+# The module contains the logic, this file contains only configuration
+module "vault_config" {
+  source = "../../../modules/vault-config"
 
-resource "vault_auth_backend" "kubernetes" {
-  type = "kubernetes"
-}
-
-resource "vault_kubernetes_auth_backend_config" "config" {
-  backend         = vault_auth_backend.kubernetes.path
   kubernetes_host = "https://kubernetes.default.svc"
-}
+  kv_path         = "secret"
 
-# Policy: myapp read-only (pod-level access)
-resource "vault_policy" "myapp_read" {
-  name   = "myapp-read"
-  policy = <<-EOT
-    path "secret/data/myapp/*" {
-      capabilities = ["read"]
+  policies = {
+    "myapp-read" = {
+      paths = {
+        "secret/data/myapp/*" = ["read"]
+      }
     }
-  EOT
-}
-
-# Policy: ESO read access (broader, for syncing secrets)
-resource "vault_policy" "eso_read" {
-  name   = "eso-read"
-  policy = <<-EOT
-    path "secret/data/*" {
-      capabilities = ["read"]
+    "eso-read" = {
+      paths = {
+        "secret/data/*"     = ["read"]
+        "secret/metadata/*" = ["read", "list"]
+      }
     }
-    path "secret/metadata/*" {
-      capabilities = ["read", "list"]
+  }
+
+  kubernetes_roles = {
+    "myapp" = {
+      service_account_names      = ["myapp"]
+      service_account_namespaces = ["default"]
+      policies                   = ["myapp-read"]
     }
-  EOT
-}
-
-# Role: myapp pod access
-resource "vault_kubernetes_auth_backend_role" "myapp" {
-  backend                          = vault_auth_backend.kubernetes.path
-  role_name                        = "myapp"
-  bound_service_account_names      = ["myapp"]
-  bound_service_account_namespaces = ["default"]
-  token_policies                   = [vault_policy.myapp_read.name]
-  token_ttl                        = 3600
-}
-
-# Role: ESO access
-resource "vault_kubernetes_auth_backend_role" "external_secrets" {
-  backend                          = vault_auth_backend.kubernetes.path
-  role_name                        = "external-secrets"
-  bound_service_account_names      = ["external-secrets"]
-  bound_service_account_namespaces = ["external-secrets"]
-  token_policies                   = [vault_policy.eso_read.name]
-  token_ttl                        = 3600
+    "external-secrets" = {
+      service_account_names      = ["external-secrets"]
+      service_account_namespaces = ["external-secrets"]
+      policies                   = ["eso-read"]
+    }
+  }
 }
