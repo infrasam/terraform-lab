@@ -106,3 +106,26 @@ resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
+
+# explicit route table for private subnets — no default route out
+# without this, private subnets fall back to the VPC main route table
+# which is implicit and dangerous: anyone adding a route there affects
+# all unassociated subnets silently
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  # no route block — only the automatic local route (10.0.0.0/16) exists
+  # this means private subnets can talk within the VPC but NOT to the internet
+
+  tags = {
+    Name        = "lab-private-rt"
+    Environment = "lab"
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  count          = length(aws_subnet.private)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
