@@ -21,3 +21,14 @@ variable "private_subnet_cidrs" {
   type        = list(string)
   default     = ["10.0.3.0/24", "10.0.4.0/24"]
 }
+
+variable "ssh_allowed_cidr" {
+  description = "CIDR block allowed to SSH into public instances"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "EC2 instance type — t3.micro is Free Tier eligible"
+  type        = string
+  default     = "t3.micro"
+}
